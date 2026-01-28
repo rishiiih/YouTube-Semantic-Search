@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     chunk_overlap: int = 50
     
     # Retrieval Configuration
-    top_k_results: int = 5
+    top_k_results: int = 20
     
     # Server Configuration
     host: str = "0.0.0.0"

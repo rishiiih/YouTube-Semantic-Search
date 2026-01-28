@@ -4,7 +4,13 @@ CREATE TABLE IF NOT EXISTS videos (
     youtube_url TEXT NOT NULL UNIQUE,
     title TEXT,
     duration REAL,  -- Duration in seconds
+    thumbnail_url TEXT,  -- YouTube thumbnail URL
+    channel_name TEXT,  -- Channel/uploader name
+    upload_date TEXT,  -- Original upload date
+    view_count INTEGER,  -- View count at ingestion time
     status TEXT NOT NULL DEFAULT 'pending',  -- pending, processing, completed, failed
+    progress_step TEXT,  -- Current step: downloading, splitting, transcribing, embedding
+    progress_percent REAL DEFAULT 0,  -- Progress percentage 0-100
     error_message TEXT,  -- Error details if status is 'failed'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

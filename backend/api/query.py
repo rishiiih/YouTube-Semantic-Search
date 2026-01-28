@@ -2,7 +2,7 @@
 Query endpoint for searching video content
 """
 from fastapi import APIRouter, HTTPException
-from backend.app.models import QueryRequest, QueryResponse, Timestamp, VideoInfo, VideoListResponse
+from backend.app.models import QueryRequest, QueryResponse, Timestamp, VideoInfo, VideoListResponse, QuestionSuggestion
 from backend.database.db import db
 from backend.services.embedding_service import embedding_service
 from backend.services.vector_store import vector_store
@@ -15,17 +15,36 @@ router = APIRouter()
 
 
 def extract_timestamps_from_answer(answer: str) -> list[str]:
-    """Extract [MM:SS] timestamps from answer text"""
-    pattern = r'\[(\d{1,2}):(\d{2})\]'
+    """Extract [MM:SS] and [HH:MM:SS] timestamps from answer text, sorted chronologically"""
+    # Match both [MM:SS] and [HH:MM:SS] formats
+    pattern = r'\[(?:(\d{1,2}):)?(\d{1,2}):(\d{2})\]'
     matches = re.findall(pattern, answer)
     
-    timestamps = []
-    for minutes, seconds in matches:
-        time_str = f"{int(minutes):02d}:{int(seconds):02d}"
-        if time_str not in timestamps:
-            timestamps.append(time_str)
+    # Convert to (seconds, formatted_string) tuples for sorting
+    timestamp_data = []
+    seen = set()
     
-    return timestamps
+    for hours, minutes, seconds in matches:
+        # Calculate total seconds
+        h = int(hours) if hours else 0
+        m = int(minutes)
+        s = int(seconds)
+        total_seconds = h * 3600 + m * 60 + s
+        
+        # Format as MM:SS or HH:MM:SS
+        if h > 0:
+            time_str = f"{h:02d}:{m:02d}:{s:02d}"
+        else:
+            time_str = f"{m:02d}:{s:02d}"
+        
+        # Deduplicate
+        if time_str not in seen:
+            seen.add(time_str)
+            timestamp_data.append((total_seconds, time_str))
+    
+    # Sort by seconds, then return formatted strings
+    timestamp_data.sort(key=lambda x: x[0])
+    return [ts[1] for ts in timestamp_data]
 
 
 def format_timestamp(seconds: float) -> str:
@@ -167,7 +186,10 @@ async def get_video(video_id: str):
     conn = await db.get_connection()
     try:
         cursor = await conn.execute(
-            "SELECT video_id, youtube_url, title, duration, status, created_at FROM videos WHERE video_id = ?",
+            """SELECT video_id, youtube_url, title, duration, thumbnail_url, 
+               channel_name, upload_date, view_count, status, progress_step, 
+               progress_percent, created_at 
+               FROM videos WHERE video_id = ?""",
             (video_id,)
         )
         video = await cursor.fetchone()
@@ -182,8 +204,14 @@ async def get_video(video_id: str):
         youtube_url=video[1],
         title=video[2] or "Unknown",
         duration=video[3] or 0.0,
-        status=video[4],
-        created_at=video[5]
+        thumbnail_url=video[4],
+        channel_name=video[5],
+        upload_date=video[6],
+        view_count=video[7],
+        status=video[8],
+        progress_step=video[9],
+        progress_percent=video[10],
+        created_at=video[11]
     )
 
 
@@ -193,7 +221,10 @@ async def list_videos():
     conn = await db.get_connection()
     try:
         cursor = await conn.execute(
-            "SELECT video_id, youtube_url, title, duration, status, created_at FROM videos ORDER BY created_at DESC"
+            """SELECT video_id, youtube_url, title, duration, thumbnail_url,
+               channel_name, upload_date, view_count, status, progress_step,
+               progress_percent, created_at 
+               FROM videos ORDER BY created_at DESC"""
         )
         videos = await cursor.fetchall()
     finally:
@@ -205,8 +236,14 @@ async def list_videos():
             youtube_url=v[1],
             title=v[2] or "Unknown",
             duration=v[3] or 0.0,
-            status=v[4],
-            created_at=v[5]
+            thumbnail_url=v[4],
+            channel_name=v[5],
+            upload_date=v[6],
+            view_count=v[7],
+            status=v[8],
+            progress_step=v[9],
+            progress_percent=v[10],
+            created_at=v[11]
         )
         for v in videos
     ]
@@ -215,3 +252,41 @@ async def list_videos():
         videos=video_list,
         total=len(video_list)
     )
+
+
+@router.get("/videos/{video_id}/suggestions", response_model=list[QuestionSuggestion])
+async def get_video_suggestions(video_id: str):
+    """Get suggested questions for a video"""
+    # Verify video exists
+    conn = await db.get_connection()
+    try:
+        cursor = await conn.execute(
+            "SELECT video_id FROM videos WHERE video_id = ?",
+            (video_id,)
+        )
+        video = await cursor.fetchone()
+        
+        if not video:
+            raise HTTPException(status_code=404, detail="Video not found")
+        
+        # Get suggestions
+        cursor = await conn.execute(
+            """SELECT id, video_id, question, created_at 
+               FROM question_suggestions 
+               WHERE video_id = ? 
+               ORDER BY id ASC""",
+            (video_id,)
+        )
+        suggestions = await cursor.fetchall()
+    finally:
+        await conn.close()
+    
+    return [
+        QuestionSuggestion(
+            id=s[0],
+            video_id=s[1],
+            question=s[2],
+            created_at=s[3]
+        )
+        for s in suggestions
+    ]

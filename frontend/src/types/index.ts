@@ -7,7 +7,7 @@ export interface Video {
   channel_name?: string
   upload_date?: string
   view_count?: number
-  status: 'pending' | 'processing' | 'completed' | 'failed'
+  status: 'pending' | 'processing' | 'completed' | 'failed' | string
   progress_step?: string
   progress_percent?: number
   created_at: string

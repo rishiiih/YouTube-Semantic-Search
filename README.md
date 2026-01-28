@@ -548,13 +548,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📧 Contact
-
-**Project Link:** [https://github.com/yourusername/youtube-semantic-search](https://github.com/yourusername/youtube-semantic-search)
-
-**Live Demo:** [https://your-app.vercel.app](https://your-app.vercel.app)
-
----
 
 <div align="center">
 

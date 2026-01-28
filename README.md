@@ -20,7 +20,6 @@ YouTube Semantic Search is an advanced AI-powered system that transforms how use
 - ⏱️ **Timestamp Precision** - Every answer includes clickable timestamps that jump directly to relevant video sections
 - 🤖 **AI-Powered Responses** - Leverages Groq's Llama 3.3 70B model for intelligent, context-aware answers
 - 📊 **Real-Time Progress Tracking** - Monitor video processing status with detailed progress indicators
-- 💡 **Smart Question Suggestions** - AI-generated contextual questions to guide exploration
 
 ---
 

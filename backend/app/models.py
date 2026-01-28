@@ -31,6 +31,8 @@ class IngestResponse(BaseModel):
     youtube_url: str
     title: Optional[str] = None
     duration: Optional[float] = None
+    thumbnail_url: Optional[str] = None
+    channel_name: Optional[str] = None
     status: IngestionStatus
     message: str
     
@@ -41,6 +43,8 @@ class IngestResponse(BaseModel):
                 "youtube_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
                 "title": "Tutorial: Building REST APIs",
                 "duration": 1234.5,
+                "thumbnail_url": "https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+                "channel_name": "Tech Channel",
                 "status": "completed",
                 "message": "Video ingested successfully"
             }
@@ -102,7 +106,13 @@ class VideoInfo(BaseModel):
     youtube_url: str
     title: str
     duration: float
+    thumbnail_url: Optional[str] = None
+    channel_name: Optional[str] = None
+    upload_date: Optional[str] = None
+    view_count: Optional[int] = None
     status: IngestionStatus
+    progress_step: Optional[str] = None
+    progress_percent: Optional[float] = None
     created_at: datetime
     
     class Config:
@@ -113,6 +123,17 @@ class VideoListResponse(BaseModel):
     """List of ingested videos"""
     videos: List[VideoInfo]
     total: int
+
+
+class QuestionSuggestion(BaseModel):
+    """AI-generated question suggestion"""
+    question: str
+    display_order: int = 0
+
+
+class VideoWithSuggestions(VideoInfo):
+    """Video info with suggested questions"""
+    suggestions: List[QuestionSuggestion] = Field(default_factory=list)
 
 
 # Error Models

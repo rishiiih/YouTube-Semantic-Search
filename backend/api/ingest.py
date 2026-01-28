@@ -8,6 +8,8 @@ from backend.services.whisper_service import whisper_service
 from backend.services.chunking import chunking_service
 from backend.services.embedding_service import embedding_service
 from backend.services.vector_store import vector_store
+from backend.services.youtube_metadata import youtube_metadata_service
+from backend.services.question_generator import question_generator_service
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
 import yt_dlp
@@ -289,6 +291,20 @@ async def transcribe_with_chunking(youtube_url: str, video_id: str, duration: fl
     raise ValueError("No audio path provided for chunking")
 
 
+async def update_progress(video_id: str, step: str, percent: float):
+    """Update ingestion progress"""
+    conn = await db.get_connection()
+    try:
+        await conn.execute(
+            """UPDATE videos SET progress_step = ?, progress_percent = ?, 
+               updated_at = CURRENT_TIMESTAMP WHERE video_id = ?""",
+            (step, percent, video_id)
+        )
+        await conn.commit()
+    finally:
+        await conn.close()
+
+
 async def process_video_ingestion(video_id: str, youtube_url: str):
     """Background task to process video ingestion"""
     try:
@@ -303,17 +319,39 @@ async def process_video_ingestion(video_id: str, youtube_url: str):
         finally:
             await conn.close()
         
+        await update_progress(video_id, "Fetching metadata", 5)
+        
+        # Get metadata first
+        metadata = await youtube_metadata_service.get_metadata(video_id)
+        
+        # Update database with metadata
+        conn = await db.get_connection()
+        try:
+            await conn.execute(
+                """UPDATE videos SET title = ?, duration = ?, thumbnail_url = ?, 
+                   channel_name = ?, upload_date = ?, view_count = ? WHERE video_id = ?""",
+                (metadata['title'], metadata['duration'], metadata['thumbnail_url'],
+                 metadata['channel_name'], metadata['upload_date'], metadata['view_count'], video_id)
+            )
+            await conn.commit()
+        finally:
+            await conn.close()
+        
+        await update_progress(video_id, "Getting transcript", 15)
+        
         # Step 1: Try to get YouTube transcript (fast, no download)
         logger.info(f"Attempting to get YouTube transcript for {video_id}")
         try:
             segments, title, duration = await get_youtube_transcript(video_id)
             logger.info(f"Successfully retrieved YouTube transcript for {video_id}")
         except Exception as transcript_error:
-            # Fallback: Download audio and transcribe with Whisper (supports chunking for long videos)
+            # Fallback: Download audio and transcribe with Whisper
             logger.warning(f"Transcript unavailable, falling back to audio download: {transcript_error}")
+            await update_progress(video_id, "Downloading audio", 20)
             logger.info(f"Downloading audio for {video_id}")
             audio_path, title, duration = await download_audio(youtube_url, video_id)
             
+            await update_progress(video_id, "Transcribing", 40)
             logger.info(f"Transcribing audio for {video_id} (duration: {duration/60:.1f} minutes)")
             segments = await transcribe_with_chunking(youtube_url, video_id, duration, audio_path)
             
@@ -321,16 +359,7 @@ async def process_video_ingestion(video_id: str, youtube_url: str):
             if os.path.exists(audio_path):
                 os.remove(audio_path)
         
-        # Update title and duration
-        conn = await db.get_connection()
-        try:
-            await conn.execute(
-                "UPDATE videos SET title = ?, duration = ? WHERE video_id = ?",
-                (title, duration, video_id)
-            )
-            await conn.commit()
-        finally:
-            await conn.close()
+        await update_progress(video_id, "Saving transcript", 60)
         
         # Step 2: Save segments to database
         conn = await db.get_connection()
@@ -345,14 +374,20 @@ async def process_video_ingestion(video_id: str, youtube_url: str):
         finally:
             await conn.close()
         
+        await update_progress(video_id, "Creating chunks", 70)
+        
         # Step 3: Chunk transcript
         logger.info(f"Chunking transcript for {video_id}")
         chunks = chunking_service.chunk_transcript(segments)
+        
+        await update_progress(video_id, "Generating embeddings", 80)
         
         # Step 4: Generate embeddings
         logger.info(f"Generating embeddings for {video_id}")
         texts = [chunk["text"] for chunk in chunks]
         embeddings = embedding_service.generate_embeddings(texts)
+        
+        await update_progress(video_id, "Indexing", 90)
         
         # Step 5: Store in ChromaDB
         logger.info(f"Storing in ChromaDB for {video_id}")
@@ -372,7 +407,37 @@ async def process_video_ingestion(video_id: str, youtube_url: str):
         finally:
             await conn.close()
         
-        # Step 7: Update status to completed
+        await update_progress(video_id, "Completed", 100)
+        
+        # Step 7: Generate suggested questions
+        logger.info(f"Generating suggested questions for {video_id}")
+        try:
+            # Get first few transcript segments for context
+            full_transcript = " ".join([seg["text"] for seg in segments[:50]])  # First 50 segments
+            questions = question_generator_service.generate_questions(
+                transcript=full_transcript,
+                video_title=title,
+                num_questions=5
+            )
+            
+            # Store questions in database
+            if questions:
+                conn = await db.get_connection()
+                try:
+                    for question in questions:
+                        await conn.execute(
+                            """INSERT INTO question_suggestions (video_id, question)
+                               VALUES (?, ?)""",
+                            (video_id, question)
+                        )
+                    await conn.commit()
+                finally:
+                    await conn.close()
+                logger.info(f"Stored {len(questions)} suggested questions for {video_id}")
+        except Exception as e:
+            logger.warning(f"Failed to generate questions for {video_id}: {e}")
+        
+        # Step 8: Update status to completed
         conn = await db.get_connection()
         try:
             await conn.execute(
@@ -387,6 +452,8 @@ async def process_video_ingestion(video_id: str, youtube_url: str):
         
     except Exception as e:
         logger.error(f"Ingestion failed for {video_id}: {e}")
+        
+        await update_progress(video_id, "Failed", 0)
         
         # Update status to failed
         conn = await db.get_connection()

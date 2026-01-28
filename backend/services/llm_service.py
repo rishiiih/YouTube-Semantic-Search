@@ -35,12 +35,20 @@ class LLMService:
             Answer string with embedded timestamps in [MM:SS] format
         """
         try:
+            # Sort chunks by start_time to provide chronological context
+            sorted_chunks = sorted(context_chunks, key=lambda x: x["start_time"])
+            
             # Format context with timestamps
             context_parts = []
-            for i, chunk in enumerate(context_chunks, 1):
+            unique_timestamps = set()
+            
+            for i, chunk in enumerate(sorted_chunks, 1):
                 start_min = int(chunk["start_time"] // 60)
                 start_sec = int(chunk["start_time"] % 60)
                 timestamp = f"[{start_min:02d}:{start_sec:02d}]"
+                
+                # Track unique timestamps
+                unique_timestamps.add(timestamp)
                 
                 context_parts.append(
                     f"Context {i} {timestamp}:\n{chunk['text']}\n"
@@ -53,21 +61,22 @@ class LLMService:
 
 CRITICAL RULES:
 1. Answer ONLY using information from the provided context
-2. Include timestamps in [MM:SS] format when referencing specific information
-3. If the answer is not in the context, say "I cannot find this information in the video"
-4. Be concise and direct
-5. Cite the timestamp [MM:SS] for each key point you mention
+2. Use DIFFERENT timestamps from DIFFERENT parts of the video - DO NOT repeat the same timestamp multiple times
+3. Reference timestamps in CHRONOLOGICAL ORDER as they appear in the video timeline
+4. Use the timestamp [MM:SS] that corresponds to each specific piece of information
+5. If multiple contexts have useful information, cite timestamps from DIFFERENT contexts to show the full video coverage
+6. Be comprehensive and reference information from throughout the video
 
-Format your answer naturally while including timestamps where relevant."""
+Format: Write naturally and embed timestamps [MM:SS] inline when mentioning specific points."""
             
             # User prompt
-            user_prompt = f"""Context from video transcript:
+            user_prompt = f"""Context from video transcript (in chronological order):
 
 {context_text}
 
 Question: {question}
 
-Answer the question using ONLY the context above. Include timestamps [MM:SS] for key points."""
+Answer comprehensively using information from MULTIPLE contexts above. Include the specific timestamp [MM:SS] for EACH key point. Use DIFFERENT timestamps to show coverage across the video timeline."""
             
             logger.info(f"Generating answer for: {question}")
             
@@ -79,11 +88,11 @@ Answer the question using ONLY the context above. Include timestamps [MM:SS] for
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.3,  # Low temperature for consistency
-                max_tokens=500
+                max_tokens=1500
             )
             
             answer = response.choices[0].message.content
-            logger.info(f"Generated answer: {answer[:100]}...")
+            logger.info(f"Generated answer with {len(unique_timestamps)} unique timestamps available")
             
             return answer
             

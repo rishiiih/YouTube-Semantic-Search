@@ -24,7 +24,7 @@ export function SearchPage() {
 
   const { data: videos, isLoading: videosLoading } = useVideos()
   const queryMutation = useQueryVideo()
-  const { data: suggestions, isLoading: suggestionsLoading } = useVideoSuggestions(selectedVideoId)
+  const { data: suggestions } = useVideoSuggestions(selectedVideoId)
   const { messages, addMessage, currentVideoId, setCurrentVideoId } = useChatStore()
 
   const completedVideos = videos?.filter(v => v.status === 'completed') || []
@@ -66,7 +66,7 @@ export function SearchPage() {
       })
 
       // Extract timestamp strings from response
-      const timestampStrings = response.timestamps?.map(t => `[${t.time}]`) || []
+      const timestampStrings = response.timestamps || []
       
       addMessage({
         role: 'assistant',

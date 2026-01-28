@@ -1,0 +1,37 @@
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+
+# Environment & Configuration
+python-dotenv==1.0.0
+
+# YouTube Transcript Extraction (official API - no download needed)
+youtube-transcript-api==0.6.2
+
+# YouTube Audio Download (fallback for videos without transcripts)
+yt-dlp>=2025.1.27  # Latest version with PO Token support
+
+# Transcription (using OpenAI API - fallback for videos without transcripts)
+openai>=1.58.1  # Latest version with httpx compatibility fixes
+
+# Embeddings & Vector Store
+sentence-transformers==2.3.1
+chromadb==0.5.23  # Updated for NumPy 2.x compatibility
+
+# LLM Integration and Transcription
+groq>=0.14.0  # Latest version with httpx compatibility
+
+# Database
+aiosqlite==0.19.0
+
+# Utilities
+pydantic==2.10.5
+pydantic-settings==2.7.1
+requests==2.31.0
+
+# Audio Processing
+pydub==0.25.1  # For splitting large audio files
+
+# Optional: Progress bars and logging
+tqdm==4.66.1

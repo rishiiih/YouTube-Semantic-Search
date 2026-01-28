@@ -2,31 +2,10 @@
 
 <div align="center">
 
-![YouTube Semantic Search](https://img.shields.io/badge/YouTube-Semantic_Search-red?style=for-the-badge&logo=youtube)
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)
 
 **A powerful Multi-Modal Retrieval-Augmented Generation (RAG) system that enables semantic search and Q&A across YouTube video content with timestamp-accurate responses.**
 
-[Demo](#demo) • [Features](#features) • [Tech Stack](#tech-stack) • [Installation](#installation) • [API Documentation](#api-documentation)
-
 </div>
-
----
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Installation](#installation)
-- [Usage](#usage)
-- [API Documentation](#api-documentation)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
 
 ---
 

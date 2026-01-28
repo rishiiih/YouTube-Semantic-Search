@@ -8,7 +8,7 @@ interface VideoCardProps {
   video: Video
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; variant: 'secondary' | 'default' | 'destructive' }> = {
   pending: { label: 'Pending', variant: 'secondary' as const },
   processing: { label: 'Processing', variant: 'default' as const },
   completed: { label: 'Completed', variant: 'default' as const },

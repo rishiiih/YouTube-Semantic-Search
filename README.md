@@ -61,23 +61,6 @@ YouTube Semantic Search is an advanced AI-powered system that transforms how use
   - Chronological ordering of timestamps in responses
   - Direct YouTube player integration (click to jump)
 
-### 💬 Conversational Interface
-
-- **Multi-Turn Chat**
-  - Persistent conversation history per video
-  - Context-aware follow-up questions
-  - Clean message threading with user/assistant distinction
-
-- **AI-Generated Question Suggestions**
-  - 5 contextual questions generated per video
-  - Powered by Llama 3.3 analyzing transcript content
-  - One-click question submission
-
-- **Rich Message Display**
-  - Markdown rendering support
-  - Syntax-highlighted code blocks
-  - Formatted timestamp pills with hover effects
-
 ### 📚 Video Library Management
 
 - **Complete Video Dashboard**
@@ -86,10 +69,6 @@ YouTube Semantic Search is an advanced AI-powered system that transforms how use
   - Metadata display: channel, views, duration, upload date
   - Progress tracking for processing videos
 
-- **Smart Filtering**
-  - Filter by status (all, completed, processing)
-  - Search by title or channel name
-  - Sort by upload date, duration, or views
 
 ### 📊 Analytics & Insights
 
@@ -112,10 +91,6 @@ YouTube Semantic Search is an advanced AI-powered system that transforms how use
   - High contrast for readability
   - Smooth animations and transitions
 
-- **Responsive Layout**
-  - Mobile-first design approach
-  - Adaptive grid layouts
-  - Touch-friendly controls
 
 - **Component Library**
   - shadcn/ui components
@@ -309,7 +284,7 @@ CREATE TABLE question_suggestions (
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/youtube-semantic-search.git
+git clone https://github.com/rishiiih/youtube-semantic-search.git
 cd youtube-semantic-search
 ```
 
@@ -363,14 +338,7 @@ echo "VITE_API_BASE_URL=http://localhost:8000" > .env.local
 ```bash
 npm run dev
 # Frontend runs on http://localhost:5173
-```
 
-### Quick Start with Docker (Alternative)
-
-```bash
-docker-compose up -d
-# Access at http://localhost
-```
 
 ---
 
@@ -393,7 +361,7 @@ docker-compose up -d
 
 1. Go to the **Search** tab
 2. Select a video from the dropdown
-3. Try suggested questions or ask your own:
+3. Ask questions like:
    - "What is the main topic discussed?"
    - "Summarize the key points"
    - "When does the speaker talk about X?"
@@ -407,137 +375,6 @@ docker-compose up -d
 
 ---
 
-## 📡 API Documentation
-
-### Authentication
-Currently, no authentication is required. Add JWT tokens for production.
-
-### Endpoints
-
-#### `POST /ingest/`
-Ingest a new YouTube video.
-
-**Request:**
-```json
-{
-  "youtube_url": "https://www.youtube.com/watch?v=VIDEO_ID"
-}
-```
-
-**Response:**
-```json
-{
-  "message": "Video ingestion started",
-  "video_id": "VIDEO_ID",
-  "status": "processing"
-}
-```
-
-#### `POST /query/`
-Query a video with a natural language question.
-
-**Request:**
-```json
-{
-  "video_id": "VIDEO_ID",
-  "question": "What is the main topic?"
-}
-```
-
-**Response:**
-```json
-{
-  "answer": "The main topic is...",
-  "video_id": "VIDEO_ID",
-  "sources_used": 5,
-  "timestamps": ["01:23", "05:45", "12:30"]
-}
-```
-
-#### `GET /videos/`
-List all videos.
-
-**Response:**
-```json
-{
-  "videos": [
-    {
-      "video_id": "VIDEO_ID",
-      "title": "Video Title",
-      "youtube_url": "https://...",
-      "duration": 1234.5,
-      "thumbnail_url": "https://...",
-      "channel_name": "Channel Name",
-      "status": "completed",
-      "progress_percent": 100
-    }
-  ],
-  "total": 1
-}
-```
-
-#### `GET /videos/{video_id}`
-Get details for a specific video.
-
-#### `GET /videos/{video_id}/suggestions`
-Get AI-generated question suggestions.
-
-**Full API Documentation:** Available at `/docs` when running the backend (Swagger UI)
-
----
-
-## 🌐 Deployment
-
-### Backend Deployment (Render)
-
-1. Create account on [Render](https://render.com)
-2. New Web Service → Connect GitHub
-3. Configure:
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
-   - **Environment**: Add `GROQ_API_KEY`
-4. Deploy
-
-### Frontend Deployment (Vercel)
-
-1. Create account on [Vercel](https://vercel.com)
-2. Import Git Repository
-3. Configure:
-   - **Framework**: Vite
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm run build`
-   - **Environment**: Add `VITE_API_BASE_URL=<your-backend-url>`
-4. Deploy
-
-**Detailed deployment guide:** See [DEPLOYMENT.md](./DEPLOYMENT.md)
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Development Guidelines
-
-- Follow PEP 8 for Python code
-- Use ESLint/Prettier for TypeScript/React
-- Write tests for new features
-- Update documentation
-
----
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 🙏 Acknowledgments
 
 - **Groq** - For lightning-fast LLM and Whisper inference
@@ -547,7 +384,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Hugging Face** - For sentence-transformers models
 
 ---
-
 
 <div align="center">
 

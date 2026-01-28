@@ -18,6 +18,8 @@ openai>=1.58.1  # Latest version with httpx compatibility fixes
 # Embeddings & Vector Store
 sentence-transformers==2.3.1
 chromadb==0.5.23  # Updated for NumPy 2.x compatibility
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.10.0+cpu  # CPU-only version to reduce memory
 
 # LLM Integration and Transcription
 groq>=0.14.0  # Latest version with httpx compatibility
